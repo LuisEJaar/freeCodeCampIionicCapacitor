@@ -1,6 +1,6 @@
 import { IonAvatar, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonMenuButton, IonModal, IonPage, IonRefresher, IonRefresherContent, IonSearchbar, IonSkeletonText, IonTitle, IonToolbar, useIonAlert, useIonToast, useIonViewWillEnter } from '@ionic/react';
 import { addOutline, refreshCircleOutline, trashBinOutline } from 'ionicons/icons';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const List: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -10,6 +10,12 @@ const List: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const modal = useRef<HTMLIonModalElement>(null);
   const cardModal = useRef<HTMLIonModalElement>(null);
+  const [presentingElement, setPresentingElement] = useState<HTMLElement | null>(null);
+  const page = useRef(null);
+
+  useEffect(()=> {
+    setPresentingElement(page.current);
+  }, [])
 
   useIonViewWillEnter(async () => {
     const users = await getUsers();
@@ -82,7 +88,7 @@ const List: React.FC = () => {
   }
 
   return (
-    <IonPage>
+    <IonPage ref={page}>
       <IonHeader>
         <IonToolbar color={'success'}>
           <IonButtons slot='start'>
@@ -169,8 +175,9 @@ const List: React.FC = () => {
           {selectedUser?.name.first}
         </IonContent>
       </IonModal>
-
-      <IonModal ref={cardModal} trigger="card-modal">
+      
+      {/* Note that the presentingElement only works for ios */}
+      <IonModal ref={cardModal} trigger="card-modal" presentingElement={presentingElement!}>
         <IonHeader>
           <IonToolbar color={'success'}>
             <IonButtons slot="start">
