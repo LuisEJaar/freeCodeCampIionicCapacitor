@@ -1,22 +1,27 @@
 import { IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPage, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs, IonTitle, IonToolbar } from '@ionic/react';
-import React from 'react';
+import React, { useState } from 'react';
 import { Redirect, Route } from 'react-router';
 import Tab1 from './Tab1';
 import Tab2 from './Tab2';
-import { rocketOutline, triangle, triangleOutline } from 'ionicons/icons';
+import { bookOutline, rocketOutline, triangle, triangleOutline, book, rocket } from 'ionicons/icons';
 
 const Settings: React.FC = () => {
+    const [clickedTab, setClickedTab] = useState("Tab1");
+
+    function tabHighlighter(event: event) {
+        setClickedTab(event.detail.tab);
+    }
 
     return (
         <IonTabs>
             <IonTabBar slot="bottom">
-                <IonTabButton tab="Tab1" href="/app/settings/tab1"> 
-                    <IonIcon icon={triangleOutline}/>
-                    <IonLabel>Tab 1 </IonLabel>
+                <IonTabButton onClick={(event) => tabHighlighter(event)} className='journal' tab="Tab1" href="/app/settings/tab1"> 
+                    <IonIcon icon={clickedTab == "Tab1" ? book : bookOutline}/>
+                    <IonLabel>Journal </IonLabel>
                 </IonTabButton> 
-                <IonTabButton tab="Tab2" href="/app/settings/tab2"> 
-                    <IonIcon icon={rocketOutline}/>
-                    <IonLabel>Tab 2 </IonLabel>
+                <IonTabButton onClick={(event) => tabHighlighter(event)} tab="Tab2" href="/app/settings/tab2"> 
+                    <IonIcon icon={clickedTab == "Tab2" ? rocket : rocketOutline}/>
+                    <IonLabel>Statistics</IonLabel>
                 </IonTabButton> 
             </IonTabBar>
 
