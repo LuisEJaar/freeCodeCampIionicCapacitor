@@ -24,26 +24,27 @@ import {
 } from "@ionic/react";
 import React, { useEffect, useState, useRef } from "react";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
-import useSQLiteDB from "../composables/useSQLiteDB";
-import useConfirmationAlert from "../composables/useConfirmationAlert";
-import { SQLItem } from "../models/SQLItem";
-import { addOutline, mapOutline } from "ionicons/icons";
-import './Tab1.css'
+import useSQLiteDB from "../../../composables/useSQLiteDB";
+import useConfirmationAlert from "../../../composables/useConfirmationAlert";
+import { SQLItem } from "../../../models/SQLItem";
+import { addOutline, mapOutline, trashBin } from "ionicons/icons";
+import './JournalTab.css'
 
-const Tab1: React.FC = () => {
+const JournalTab: React.FC = () => {
   const newTripModal = useRef<HTMLIonModalElement>(null);
   const editDeleteModal = useRef<HTMLIonModalElement>(null);
   const tripDetailModal = useRef<HTMLIonModalElement>(null);
   const [presentingElement, setPresentingElement] = useState<HTMLElement | null>(null);
   const page = useRef(null);
 
+  const [showNewLog, setShowNewLog] = useState<boolean>(false);
   const [selectedTrip, setSelectedTrip] = useState<any>(); 
   const [editTrip, setEditTrip] = useState<any>();
   const [inputLocation, setInputLocation] = useState("");
   const [inputDate, setInputDate] = useState("");
   const [inputRoute, setInputRoute] = useState("");
   const [inputAttempt, setInputAttempt] = useState("");
-  const [inputComplete, setInputComplete] = useState("");
+  const [inputComplete, setInputComplete] = useState(0);
   const [inputDifficulty, setInputDifficulty] = useState("");
   const [trips, setTrips] = useState<Array<SQLItem>>();
   const [routes, setRoutes] = useState<Array<SQLItem>>();
@@ -69,8 +70,7 @@ const Tab1: React.FC = () => {
     try {
       // query db
       performSQLAction(async (db: SQLiteDBConnection | undefined) => {
-        const respSelect = await db?.query(`SELECT DISTINCT LOCATION, DATE, * FROM TRIPLOG`);
-        console.log(respSelect?.values);
+        const respSelect = await db?.query(`SELECT DISTINCT LOCATION, DATE FROM TRIPLOG`);
         setTrips(respSelect?.values);
       });
     } catch (error) {
@@ -173,6 +173,17 @@ const Tab1: React.FC = () => {
     });
   };
 
+  const confirmClear = () => {
+    showConfirmationAlert("Are you sure you want to reset this entry?", () => {
+      setInputLocation("");
+      setInputDate("");
+      setInputRoute("");
+      setInputAttempt("");
+      setInputComplete(0);
+      setInputDifficulty("");
+    });
+  };
+
   const deleteTrip = async (tripId: number) => {
     try {
       // add TRIPLOG record to db
@@ -208,12 +219,14 @@ const Tab1: React.FC = () => {
   };
 
   const copyLastEntry = () => {
-    setInputLocation(routes[routes?.length - 1].LOCATION);
-    setInputDate(routes[routes?.length - 1].DATE);
-    setInputRoute(routes[routes?.length - 1].ROUTE);
-    setInputAttempt(routes[routes?.length - 1].ATTEMPT);
-    setInputComplete(routes[routes?.length - 1].COMPLETE);
-    setInputDifficulty(routes[routes?.length - 1].DIFFICULTY);
+    let target: SQLItem[] = selectedTrip == null ? trips : routes;
+
+    setInputLocation(target[target?.length - 1].LOCATION);
+    setInputDate(target[target?.length - 1].DATE);
+    setInputRoute(target[target?.length - 1].ROUTE);
+    setInputAttempt(target[target?.length - 1].ATTEMPT);
+    setInputComplete(target[target?.length - 1].COMPLETE);
+    setInputDifficulty(target[target?.length - 1].DIFFICULTY);
   }
 
   return (
@@ -261,20 +274,20 @@ const Tab1: React.FC = () => {
       {/* New log Modal */}
       <IonModal 
         ref={newTripModal} 
-        trigger="card-modal" 
         presentingElement={presentingElement!} 
         breakpoints={[0,0.8]} 
         initialBreakpoint={0.8}
+        isOpen={showNewLog}
       >
         <IonHeader>
           <IonToolbar color={'success'}>
             <IonButtons slot="start">
               <IonButton onClick={() => {
-                newTripModal.current?.dismiss();}}> Close</IonButton>
+                setShowNewLog(false)}}> Close</IonButton>
             </IonButtons>
-            <IonTitle>New Trip</IonTitle>
+            <IonTitle>New Climb</IonTitle>
             <IonButtons slot="end">
-              <IonButton onClick={() => copyLastEntry()}> Copy Last Entry</IonButton>
+              <IonButton onClick={() => copyLastEntry()}> Copy Last </IonButton>
             </IonButtons>
           </IonToolbar>
         </IonHeader>
@@ -345,12 +358,16 @@ const Tab1: React.FC = () => {
             <IonIcon slot="start" icon={mapOutline} />
               Add trip!
           </IonButton>
+          <IonButton expand='block' className="-mt-4" color="warning" onClick={() => confirmClear()}>
+            <IonIcon slot="end" icon={trashBin} />
+              Clear Entry
+          </IonButton>
         </IonContent>
       </IonModal>
 
       {/*Add log button*/}
       <IonFab vertical="bottom" horizontal="end" slot="fixed">
-          <IonFabButton id='card-modal'>
+          <IonFabButton onClick={() => setShowNewLog(true)}>
             <IonIcon icon={addOutline}/>
           </IonFabButton>  
       </IonFab>
@@ -403,8 +420,8 @@ const Tab1: React.FC = () => {
       <IonModal 
         ref={tripDetailModal}
         presentingElement={presentingElement!}
-        breakpoints={[0,0.5]} 
-        initialBreakpoint={0.5}
+        breakpoints={[0,0.8]} 
+        initialBreakpoint={0.8}
         isOpen={selectedTrip != null}
         backdropDismiss:true
         onIonModalWillPresent={() => loadTrip()}
@@ -416,6 +433,9 @@ const Tab1: React.FC = () => {
               <IonButton onClick={() => tripDetailModal.current?.dismiss()}> Close</IonButton>
             </IonButtons>
             <IonTitle>Trip Detail</IonTitle>
+            <IonButtons slot="end">
+              <IonButton onClick={() => setShowNewLog(true)}> Add Route</IonButton>
+            </IonButtons>
           </IonToolbar>
         </IonHeader>
         <IonContent>
@@ -448,4 +468,4 @@ const Tab1: React.FC = () => {
   );
 };
 
-export default Tab1;
+export default JournalTab;
